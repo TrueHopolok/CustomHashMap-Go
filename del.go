@@ -9,7 +9,7 @@ package hashmap
 //
 // Memory Complexity:
 //   - O(1)
-func (m HashMap[K, V]) Del(key K) {
+func (m *HashMap[K, V]) Del(key K) {
 	keyHashed := key.Hash(m.capMax)
 	if keyHashed >= m.capMax {
 		panic(HashableError{keyHashed, m.capMax})
@@ -45,7 +45,7 @@ func (m HashMap[K, V]) Del(key K) {
 //
 // Memory Complexity:
 //   - O(1)
-func (m HashMap[K, V]) Rem(key K) bool {
+func (m *HashMap[K, V]) Rem(key K) bool {
 	keyHashed := key.Hash(m.capMax)
 	if keyHashed >= m.capMax {
 		panic(HashableError{keyHashed, m.capMax})

@@ -15,11 +15,15 @@ func (m HashMap[K, V]) All() []Item[K, V] {
 	i := 0
 	for _, n := range m.table {
 		for n != nil {
+			if i >= len(res) {
+				panic(IIError{"[KEY] collected different amount of items compared to stored amount in the map"})
+			}
 			res[i] = Item[K, V]{
 				Key: n.key,
 				Val: n.val,
 			}
 			i++
+			n = n.next
 		}
 	}
 	if i < len(res) {
@@ -43,8 +47,12 @@ func (m HashMap[K, V]) Key() []K {
 	i := 0
 	for _, n := range m.table {
 		for n != nil {
+			if i >= len(res) {
+				panic(IIError{"[KEY] collected different amount of items compared to stored amount in the map"})
+			}
 			res[i] = n.key
 			i++
+			n = n.next
 		}
 	}
 	if i < len(res) {
@@ -68,8 +76,12 @@ func (m HashMap[K, V]) Val() []V {
 	i := 0
 	for _, n := range m.table {
 		for n != nil {
+			if i >= len(res) {
+				panic(IIError{"[KEY] collected different amount of items compared to stored amount in the map"})
+			}
 			res[i] = n.val
 			i++
+			n = n.next
 		}
 	}
 	if i < len(res) {

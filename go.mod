@@ -2,6 +2,8 @@ module github.com/TrueHopolok/CustomHashMap-Go
 
 go 1.24.2
 
+require golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
+
 require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect

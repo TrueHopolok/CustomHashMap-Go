@@ -3,10 +3,10 @@ package hashmap
 // NewHashMap creates new empty [HashMap] with reserved memory of base capacity.
 func NewHashMap[K Hashable, V any]() HashMap[K, V] {
 	return HashMap[K, V]{
-		capMax: START_CAPACITY * 2,
-		capCur: START_CAPACITY,
+		capMax: 2,
+		capCur: 1,
 		len:    0,
-		table:  make([]*node[K, V], START_CAPACITY*2),
+		table:  make([]*node[K, V], 2),
 	}
 }
 
@@ -14,11 +14,13 @@ func NewHashMap[K Hashable, V any]() HashMap[K, V] {
 // Gurantees no resizing after calling this function until amount of inserted elements surpasses given length.
 // Beaware, total memory allocated will be 2 times larger than given len to avoid collisions.
 //
+// Parameter must be between 1 and [MAX_CAPACITY]/2 included both points, otherwise code will panic.
+//
 // Time Complexity:
 //   - O(N), where N is given length
 //
 // Memory Complexity:
-//   - O(2N), where N is given length
+//   - O(N), where N is given length
 func MakeHashMap[K Hashable, V any](len uint64) HashMap[K, V] {
 	if len == 0 || len > MAX_CAPACITY/2 {
 		panic(InvalidLengthError{})

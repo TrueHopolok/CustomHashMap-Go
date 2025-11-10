@@ -1,7 +1,7 @@
 package hashmap
 
 // expand multiple capacity of the map by 2
-func (m HashMap[K, V]) expand() {
+func (m *HashMap[K, V]) expand() {
 	items := m.All()
 
 	for {
@@ -27,4 +27,14 @@ func (m HashMap[K, V]) expand() {
 	if m.len != uint64(len(items)) {
 		panic(IIError{"[EXPAND] inserted different amount of elements that previously it was"})
 	}
+}
+
+// Len returns amount of elements currently in the map.
+func (m HashMap[K, V]) Len() uint64 {
+	return m.len
+}
+
+// Cap returns current available capacity or amount of elements that can be added until map will be expended.
+func (m HashMap[K, V]) Cap() uint64 {
+	return m.capCur
 }

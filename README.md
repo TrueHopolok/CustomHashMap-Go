@@ -6,7 +6,16 @@
 import "github.com/TrueHopolok/CustomHashMap-Go"
 ```
 
-hashmap desription TODO
+hashmap is implementation of custom hash map build on golang. Goal was not to outperform the language built\-in map, but to increase skill set.
+
+Implementation is simple:
+
+- We have a buckets storing pair of key and value as items in a linked list.
+- To find the value, we go to respective bucket based on a hash value of a given key and search in a linked list that key.
+- Insertion works by finding respective bucket and inserting item pair into the end of that bucket's linked list.
+- Deletion works by finding the key and deleting it from the linked list.
+- If required memory is exceeded, with that being 50% of total capacity, map will be expanded and reordered.
+- Expansion of the map works by coping all items, expanding the storage and inserting all items back into the map.
 
 ## Index
 
@@ -14,16 +23,18 @@ hashmap desription TODO
 - [type HashMap](<#HashMap>)
   - [func MakeHashMap\[K Hashable, V any\]\(len uint64\) HashMap\[K, V\]](<#MakeHashMap>)
   - [func NewHashMap\[K Hashable, V any\]\(\) HashMap\[K, V\]](<#NewHashMap>)
-  - [func \(m HashMap\[K, V\]\) Add\(key K, val V\) bool](<#HashMap[K, V].Add>)
+  - [func \(m \*HashMap\[K, V\]\) Add\(key K, val V\) bool](<#HashMap[K, V].Add>)
   - [func \(m HashMap\[K, V\]\) All\(\) \[\]Item\[K, V\]](<#HashMap[K, V].All>)
-  - [func \(m HashMap\[K, V\]\) Del\(key K\)](<#HashMap[K, V].Del>)
+  - [func \(m HashMap\[K, V\]\) Cap\(\) uint64](<#HashMap[K, V].Cap>)
+  - [func \(m \*HashMap\[K, V\]\) Del\(key K\)](<#HashMap[K, V].Del>)
   - [func \(m HashMap\[K, V\]\) Get\(key K\) \(val V, exists bool\)](<#HashMap[K, V].Get>)
   - [func \(m HashMap\[K, V\]\) Has\(key K\) \(exists bool\)](<#HashMap[K, V].Has>)
   - [func \(m HashMap\[K, V\]\) Key\(\) \[\]K](<#HashMap[K, V].Key>)
-  - [func \(m HashMap\[K, V\]\) Rem\(key K\) bool](<#HashMap[K, V].Rem>)
+  - [func \(m HashMap\[K, V\]\) Len\(\) uint64](<#HashMap[K, V].Len>)
+  - [func \(m \*HashMap\[K, V\]\) Rem\(key K\) bool](<#HashMap[K, V].Rem>)
   - [func \(m HashMap\[K, V\]\) Req\(key K\) \(val V\)](<#HashMap[K, V].Req>)
-  - [func \(m HashMap\[K, V\]\) Set\(key K, val V\)](<#HashMap[K, V].Set>)
-  - [func \(m HashMap\[K, V\]\) Upd\(key K, val V\) bool](<#HashMap[K, V].Upd>)
+  - [func \(m \*HashMap\[K, V\]\) Set\(key K, val V\)](<#HashMap[K, V].Set>)
+  - [func \(m \*HashMap\[K, V\]\) Upd\(key K, val V\) bool](<#HashMap[K, V].Upd>)
   - [func \(m HashMap\[K, V\]\) Val\(\) \[\]V](<#HashMap[K, V].Val>)
 - [type Hashable](<#Hashable>)
 - [type HashableError](<#HashableError>)
@@ -43,12 +54,9 @@ hashmap desription TODO
 
 ```go
 const (
-    // MAX_CAPACITY that is allowed for allocation => max insertion capacity is 1 milliard.
+    // MAX_CAPACITY that is allowed for allocation => max insertion capacity is 1 billion.
     // That is around 1 gigabyte * sum of sizes of the key and value types.
     MAX_CAPACITY uint64 = 2_000_000_000
-
-    // START_CAPACITY is how many elements are allowed to be inserted into default map created by [NewHashMap].
-    START_CAPACITY uint64 = 64
 )
 ```
 
@@ -63,6 +71,47 @@ type HashMap[K Hashable, V any] struct {
 }
 ```
 
+<details><summary>Example</summary>
+<p>
+
+
+
+```go
+package main
+
+import (
+	"fmt"
+
+	hashmap "github.com/TrueHopolok/CustomHashMap-Go"
+	"github.com/TrueHopolok/CustomHashMap-Go/hashable"
+)
+
+func main() {
+	input := "ABCABA"
+	hmap := hashmap.NewHashMap[hashable.Rune, int]()
+	for _, r := range input {
+		hr := hashable.Rune(r) // typecast required
+		v := hmap.Req(hr) + 1
+		hmap.Set(hr, v)
+	}
+	results := hmap.All()
+	for _, item := range results {
+		fmt.Printf("%c: %d\n", item.Key, item.Val)
+	}
+}
+```
+
+#### Output
+
+```
+A: 3
+C: 1
+B: 2
+```
+
+</p>
+</details>
+
 <a name="MakeHashMap"></a>
 ### func MakeHashMap
 
@@ -72,13 +121,15 @@ func MakeHashMap[K Hashable, V any](len uint64) HashMap[K, V]
 
 MakeHashMap creates new [HashMap](<#HashMap>) with reserved memory for given len parameter. Gurantees no resizing after calling this function until amount of inserted elements surpasses given length. Beaware, total memory allocated will be 2 times larger than given len to avoid collisions.
 
+Parameter must be between 1 and [MAX\\\_CAPACITY](<#MAX_CAPACITY>)/2 included both points, otherwise code will panic.
+
 Time Complexity:
 
 - O\(N\), where N is given length
 
 Memory Complexity:
 
-- O\(2N\), where N is given length
+- O\(N\), where N is given length
 
 <a name="NewHashMap"></a>
 ### func NewHashMap
@@ -90,10 +141,10 @@ func NewHashMap[K Hashable, V any]() HashMap[K, V]
 NewHashMap creates new empty [HashMap](<#HashMap>) with reserved memory of base capacity.
 
 <a name="HashMap[K, V].Add"></a>
-### func \(HashMap\[K, V\]\) Add
+### func \(\*HashMap\[K, V\]\) Add
 
 ```go
-func (m HashMap[K, V]) Add(key K, val V) bool
+func (m *HashMap[K, V]) Add(key K, val V) bool
 ```
 
 Add inserts value into the [HashMap](<#HashMap>) as item with given key. Returns whether or not value was inserted into the [HashMap](<#HashMap>). May increase size of the [HashMap](<#HashMap>).
@@ -130,11 +181,20 @@ Memory Complexity:
 
 - O\(N\), where N is current amount of elements
 
-<a name="HashMap[K, V].Del"></a>
-### func \(HashMap\[K, V\]\) Del
+<a name="HashMap[K, V].Cap"></a>
+### func \(HashMap\[K, V\]\) Cap
 
 ```go
-func (m HashMap[K, V]) Del(key K)
+func (m HashMap[K, V]) Cap() uint64
+```
+
+Cap returns current available capacity or amount of elements that can be added until map will be expended.
+
+<a name="HashMap[K, V].Del"></a>
+### func \(\*HashMap\[K, V\]\) Del
+
+```go
+func (m *HashMap[K, V]) Del(key K)
 ```
 
 Del removes value with given key from the map. If such element does not exists, does nothing.
@@ -200,11 +260,20 @@ Memory Complexity:
 
 - O\(N\), where N is current amount of elements
 
-<a name="HashMap[K, V].Rem"></a>
-### func \(HashMap\[K, V\]\) Rem
+<a name="HashMap[K, V].Len"></a>
+### func \(HashMap\[K, V\]\) Len
 
 ```go
-func (m HashMap[K, V]) Rem(key K) bool
+func (m HashMap[K, V]) Len() uint64
+```
+
+Len returns amount of elements currently in the map.
+
+<a name="HashMap[K, V].Rem"></a>
+### func \(\*HashMap\[K, V\]\) Rem
+
+```go
+func (m *HashMap[K, V]) Rem(key K) bool
 ```
 
 Rem removes value with given key from the map. Returns whether or not item was deleted.
@@ -237,10 +306,10 @@ Memory Complexity:
 - O\(1\)
 
 <a name="HashMap[K, V].Set"></a>
-### func \(HashMap\[K, V\]\) Set
+### func \(\*HashMap\[K, V\]\) Set
 
 ```go
-func (m HashMap[K, V]) Set(key K, val V)
+func (m *HashMap[K, V]) Set(key K, val V)
 ```
 
 Set replaces value of item in the [HashMap](<#HashMap>) with given key. May increase size of the [HashMap](<#HashMap>).
@@ -261,10 +330,10 @@ Memory Complexity:
 - O\(N\) worst, where N is current amount of elements
 
 <a name="HashMap[K, V].Upd"></a>
-### func \(HashMap\[K, V\]\) Upd
+### func \(\*HashMap\[K, V\]\) Upd
 
 ```go
-func (m HashMap[K, V]) Upd(key K, val V) bool
+func (m *HashMap[K, V]) Upd(key K, val V) bool
 ```
 
 Upd updates value of item in the [HashMap](<#HashMap>) with given key. Returns whether or not value of the item was found and updated. Never increases size of the [HashMap](<#HashMap>).

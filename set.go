@@ -16,7 +16,7 @@ package hashmap
 // Memory Complexity:
 //   - O(1) amortized
 //   - O(N) worst, where N is current amount of elements
-func (m HashMap[K, V]) Set(key K, val V) {
+func (m *HashMap[K, V]) Set(key K, val V) {
 	keyHashed := key.Hash(m.capMax)
 	if keyHashed >= m.capMax {
 		panic(HashableError{keyHashed, m.capMax})
@@ -36,12 +36,17 @@ func (m HashMap[K, V]) Set(key K, val V) {
 
 	for m.len >= m.capCur {
 		m.expand()
+		keyHashed = key.Hash(m.capMax)
+		if keyHashed >= m.capMax {
+			panic(HashableError{keyHashed, m.capMax})
+		}
 	}
 	m.len++
 
 	cur := m.table[keyHashed]
 	if cur == nil {
 		m.table[keyHashed] = &node[K, V]{
+			key:  key,
 			val:  val,
 			next: nil,
 		}
@@ -53,6 +58,7 @@ func (m HashMap[K, V]) Set(key K, val V) {
 		}
 		if cur.next == nil {
 			cur.next = &node[K, V]{
+				key:  key,
 				val:  val,
 				next: nil,
 			}
@@ -80,7 +86,7 @@ func (m HashMap[K, V]) Set(key K, val V) {
 // Memory Complexity:
 //   - O(1) amortized
 //   - O(N) worst, where N is current amount of elements
-func (m HashMap[K, V]) Add(key K, val V) bool {
+func (m *HashMap[K, V]) Add(key K, val V) bool {
 	keyHashed := key.Hash(m.capMax)
 	if keyHashed >= m.capMax {
 		panic(HashableError{keyHashed, m.capMax})
@@ -92,12 +98,17 @@ func (m HashMap[K, V]) Add(key K, val V) bool {
 
 	for m.len >= m.capCur {
 		m.expand()
+		keyHashed = key.Hash(m.capMax)
+		if keyHashed >= m.capMax {
+			panic(HashableError{keyHashed, m.capMax})
+		}
 	}
 	m.len++
 
 	cur := m.table[keyHashed]
 	if cur == nil {
 		m.table[keyHashed] = &node[K, V]{
+			key:  key,
 			val:  val,
 			next: nil,
 		}
@@ -109,6 +120,7 @@ func (m HashMap[K, V]) Add(key K, val V) bool {
 		}
 		if cur.next == nil {
 			cur.next = &node[K, V]{
+				key:  key,
 				val:  val,
 				next: nil,
 			}
@@ -133,7 +145,7 @@ func (m HashMap[K, V]) Add(key K, val V) bool {
 // Memory Complexity:
 //   - O(1) amortized
 //   - O(N) worst, where N is current amount of elements
-func (m HashMap[K, V]) Upd(key K, val V) bool {
+func (m *HashMap[K, V]) Upd(key K, val V) bool {
 	keyHashed := key.Hash(m.capMax)
 	if keyHashed >= m.capMax {
 		panic(HashableError{keyHashed, m.capMax})

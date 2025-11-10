@@ -1,15 +1,21 @@
-// hashmap desription TODO
+// hashmap is implementation of custom hash map build on golang.
+// Goal was not to outperform the language built-in map, but to increase skill set.
+//
+// Implementation is simple:
+//   - We have a buckets storing pair of key and value as items in a linked list.
+//   - To find the value, we go to respective bucket based on a hash value of a given key and search in a linked list that key.
+//   - Insertion works by finding respective bucket and inserting item pair into the end of that bucket's linked list.
+//   - Deletion works by finding the key and deleting it from the linked list.
+//   - If required memory is exceeded, with that being 50% of total capacity, map will be expanded and reordered.
+//   - Expansion of the map works by coping all items, expanding the storage and inserting all items back into the map.
 package hashmap
 
 //go:generate go run github.com/princjef/gomarkdoc/cmd/gomarkdoc . -o README.md
 
 const (
-	// MAX_CAPACITY that is allowed for allocation => max insertion capacity is 1 milliard.
+	// MAX_CAPACITY that is allowed for allocation => max insertion capacity is 1 billion.
 	// That is around 1 gigabyte * sum of sizes of the key and value types.
 	MAX_CAPACITY uint64 = 2_000_000_000
-
-	// START_CAPACITY is how many elements are allowed to be inserted into default map created by [NewHashMap].
-	START_CAPACITY uint64 = 64
 )
 
 type (
